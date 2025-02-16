@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Admin Dashboard{% endblock  %}
+
+{% block content %}
+    <!-- Dashboard Container -->
+    <div class="container mx-auto mt-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Welcome back, Admin</h2>
+            <hr class="my-4 border-gray-200">
+
+            <!-- Management Sections -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                
+                <!-- Bus Management -->
+                <div class="p-4 bg-white border-l-4 border-blue-500 rounded-lg shadow-md">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2">Bus Management</h3>
+                    <p class="text-sm text-gray-600">Manage and track buses.</p>
+                    <a href="{% url 'bus_management' %}" class="mt-4 block text-blue-600 hover:underline">Manage Buses &rarr;</a>
+                </div>
+
+                <!-- Driver Management -->
+                <div class="p-4 bg-white border-l-4 border-green-500 rounded-lg shadow-md">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2">Driver Management</h3>
+                    <p class="text-sm text-gray-600">Manage registered drivers.</p>
+                    <a href="{% url 'index' %}" class="mt-4 block text-blue-600 hover:underline">Manage Drivers &rarr;</a>
+                </div>
+
+                <!-- Student Management -->
+                <div class="p-4 bg-white border-l-4 border-yellow-500 rounded-lg shadow-md">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2">Student Management</h3>
+                    <p class="text-sm text-gray-600">Manage student records and payments.</p>
+                    <a href="{% url 'index' %}" class="mt-4 block text-blue-600 hover:underline">Manage Students &rarr;</a>
+                </div>
+
+                <!-- Payment Management -->
+                <div class="p-4 bg-white border-l-4 border-red-500 rounded-lg shadow-md">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2">Payment Management</h3>
+                    <p class="text-sm text-gray-600">Monitor and handle payments.</p>
+                    <a href="{% url 'index' %}" class="mt-4 block text-blue-600 hover:underline">Manage Payments &rarr;</a>
+                </div>
+            </div>
+
+            <hr class="my-6 border-gray-200">
+
+            <!-- Recent Activity Table -->
+            <div>
+                <h3 class="text-md font-medium text-gray-700 mb-4">Recent Activity</h3>
+                <div class="overflow-x-auto bg-white shadow-md rounded-lg">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                            <tr>
+                                <th class="px-6 py-3">User</th>
+                                <th class="px-6 py-3">Event</th>
+                                <th class="px-6 py-3">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b hover:bg-gray-50">
+                                <td class="px-6 py-4 flex items-center">
+                                    <img class="w-8 h-8 rounded-full mr-2" src="https://i.pravatar.cc/50" alt="Admin">
+                                    Admin
+                                </td>
+                                <td class="px-6 py-4">Updated Bus Route</td>
+                                <td class="px-6 py-4">Feb 16, 2025</td>
+                            </tr>
+                            <tr class="bg-white border-b hover:bg-gray-50">
+                                <td class="px-6 py-4 flex items-center">
+                                    <img class="w-8 h-8 rounded-full mr-2" src="https://i.pravatar.cc/100" alt="Driver">
+                                    Driver
+                                </td>
+                                <td class="px-6 py-4">Checked in Bus Location</td>
+                                <td class="px-6 py-4">Feb 16, 2025</td>
+                            </tr>
+                            <tr class="bg-white hover:bg-gray-50">
+                                <td class="px-6 py-4 flex items-center">
+                                    <img class="w-8 h-8 rounded-full mr-2" src="https://i.pravatar.cc/150" alt="Student">
+                                    Student
+                                </td>
+                                <td class="px-6 py-4">Made Payment</td>
+                                <td class="px-6 py-4">Feb 15, 2025</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+{% endblock %}

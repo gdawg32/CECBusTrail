@@ -1,0 +1,613 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+    <div class="container mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-indigo-900 mb-2">Transit Hub</h1>
+            <p class="text-gray-600">Manage your bus network with ease</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Left Column -->
+            <div class="space-y-8">
+                <!-- Add Bus Stop Card -->
+                <div class="bg-white rounded-xl shadow-lg transition-transform hover:scale-[1.02] duration-300">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </div>
+                            <h2 class="text-2xl font-semibold text-gray-800">Add Bus Stop</h2>
+                        </div>
+                        
+                        <form id="busStopForm" class="space-y-4">
+                            <div class="relative">
+                                <input type="text" id="stopName" class="peer w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors" required>
+                                <label class="absolute left-2 top-0 px-2 text-sm bg-white text-gray-600 transition-all peer-focus:text-blue-500">Stop Name</label>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="relative">
+                                    <input type="text" id="latitude" class="peer w-full p-4 border-2 border-gray-200 rounded-lg bg-gray-50" required readonly>
+                                    <label class="absolute left-2 top-0 px-2 text-sm bg-white text-gray-600">Latitude</label>
+                                </div>
+                                <div class="relative">
+                                    <input type="text" id="longitude" class="peer w-full p-4 border-2 border-gray-200 rounded-lg bg-gray-50" required readonly>
+                                    <label class="absolute left-2 top-0 px-2 text-sm bg-white text-gray-600">Longitude</label>
+                                </div>
+                            </div>
+
+                            <div id="map" class="w-full h-[400px] rounded-lg shadow-inner border-2 border-gray-200"></div>
+
+                            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                Add New Stop
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Bus Stops List -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-semibold text-gray-800">Bus Stops</h2>
+                    </div>
+                    <div class="max-h-96 overflow-y-auto pr-2">
+                        <ul id="busStopList" class="space-y-2">
+                            <!-- Dynamic content will be appended here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-8">
+                <!-- Add Bus Card -->
+                <div class="bg-white rounded-xl shadow-lg transition-transform hover:scale-[1.02] duration-300">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                </svg>
+                            </div>
+                            <h2 class="text-2xl font-semibold text-gray-800">Add Bus</h2>
+                        </div>
+
+                        <form id="busForm" class="space-y-4">
+                            <div class="relative">
+                                <input type="text" id="busNumberPlate" class="peer w-full p-4 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors" required>
+                                <label class="absolute left-2 top-0 px-2 text-sm bg-white text-gray-600 transition-all peer-focus:text-purple-500">Bus Number Plate</label>
+                            </div>
+
+                            <div class="relative">
+                                <input type="text" id="routeName" class="peer w-full p-4 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors" required>
+                                <label class="absolute left-2 top-0 px-2 text-sm bg-white text-gray-600 transition-all peer-focus:text-purple-500">Route Name</label>
+                            </div>
+
+                            <div class="relative">
+                                <input type="number" id="capacity" class="peer w-full p-4 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors" required>
+                                <label class="absolute left-2 top-0 px-2 text-sm bg-white text-gray-600 transition-all peer-focus:text-purple-500">Capacity</label>
+                            </div>
+
+                            <div class="relative">
+                                <label class="absolute left-2 top-0 px-2 text-sm bg-white text-gray-600 z-10">Select Stops (Multiple)</label>
+                                <div class="mt-1">
+                                    <div class="relative">
+                                        <input type="text" id="stopSearch" placeholder="Search stops..." class="w-full p-4 border-2 border-gray-200 rounded-t-lg focus:border-purple-500 focus:outline-none transition-colors">
+                                        <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="border-2 border-t-0 border-gray-200 rounded-b-lg bg-white overflow-hidden">
+                                        <!-- Selected stops section -->
+                                        <div id="selectedStops" class="px-3 py-2 border-b border-gray-200 space-y-2 min-h-[60px]">
+                                            <!-- Selected stops will be displayed here -->
+                                        </div>
+                                        
+                                        <!-- Available stops list -->
+                                        <div id="busStops" class="max-h-[300px] overflow-y-auto">
+                                            <div class="p-2 space-y-1">
+                                                <!-- Stops will be populated here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                Add New Bus
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal Backdrop -->
+                <div id="modalBackdrop" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999] hidden">
+                    <div class="modal-content bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 transform transition-all duration-300">
+                      <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-3">
+                          <div class="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                            </svg>
+                          </div>
+                          <h3 class="text-2xl font-semibold text-gray-800" id="modalTitle">Bus Route Details</h3>
+                        </div>
+                        <button id="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <div id="modalContent" class="space-y-4 max-h-[60vh] overflow-y-auto">
+                        <!-- Dynamic content will be inserted here -->
+                      </div>
+                    </div>
+                  </div>
+  
+  
+
+                <!-- Enhanced Bus List -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center mr-3">
+                            <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-semibold text-gray-800">Active Buses</h2>
+                    </div>
+                    <div class="max-h-96 overflow-y-auto pr-2">
+                        <ul id="busList" class="space-y-2">
+                            <!-- Dynamic content -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS & JS for map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// Initialize Google Map (Leaflet in this case) for adding bus stops
+var map = L.map('map').setView([9.6, 76.3], 10);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+var marker;
+map.on('click', function(e) {
+    var lat = e.latlng.lat.toFixed(6);
+    var lng = e.latlng.lng.toFixed(6);
+    
+    document.getElementById('latitude').value = lat;
+    document.getElementById('longitude').value = lng;
+    
+    if (marker) {
+        marker.setLatLng(e.latlng);
+    } else {
+        marker = L.marker(e.latlng, {
+            icon: L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color: #4F46E5; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            })
+        }).addTo(map);
+    }
+});
+
+// Function to update available stops list and also update Bus Stops List (UL)
+function populateBusStops(stops) {
+    // Populate stops for the multi-select section (in the right column)
+    const busStopsContainer = document.querySelector('#busStops .p-2');
+    const selectedStopsContainer = document.getElementById('selectedStops');
+    const searchInput = document.getElementById('stopSearch');
+    
+    // Create hidden input for form submission if not already created
+    let hiddenInput = document.getElementById('selectedStopsInput');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'selectedStops';
+        hiddenInput.id = 'selectedStopsInput';
+        document.getElementById('busStops').parentNode.appendChild(hiddenInput);
+    }
+    
+    let selectedStops = new Set();
+    
+    function updateSelectedStops() {
+        selectedStopsContainer.innerHTML = '';
+        hiddenInput.value = Array.from(selectedStops).join(',');
+        
+        Array.from(selectedStops).forEach(stopId => {
+            const stop = stops.find(s => s.id === stopId);
+            if (!stop) return;
+            
+            const chip = document.createElement('div');
+            chip.className = 'inline-flex items-center bg-purple-100 text-purple-800 rounded-full px-3 py-1 text-sm mr-2 mb-2';
+            chip.innerHTML = `
+                ${stop.name}
+                <button class="ml-2 focus:outline-none" data-stop-id="${stop.id}">
+                    <svg class="w-4 h-4 hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+            selectedStopsContainer.appendChild(chip);
+            
+            chip.querySelector('button').addEventListener('click', function() {
+                selectedStops.delete(stopId);
+                updateSelectedStops();
+                updateStopsList();
+            });
+        });
+    }
+    
+    function updateStopsList(searchTerm = '') {
+        busStopsContainer.innerHTML = '';
+        
+        stops.filter(stop => 
+            !selectedStops.has(stop.id) && 
+            stop.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ).forEach(stop => {
+            const stopElement = document.createElement('div');
+            stopElement.className = 'p-2 hover:bg-gray-50 cursor-pointer rounded transition-colors flex items-center space-x-3';
+            stopElement.innerHTML = `
+                <div class="w-2 h-2 rounded-full bg-purple-500"></div>
+                <span class="flex-grow">${stop.name}</span>
+                <span class="text-sm text-gray-400">#${stop.id}</span>
+            `;
+            
+            stopElement.addEventListener('click', () => {
+                selectedStops.add(stop.id);
+                updateSelectedStops();
+                updateStopsList(searchInput.value);
+            });
+            
+            busStopsContainer.appendChild(stopElement);
+        });
+    }
+    
+    // Initial render for the multi-select stops section
+    updateStopsList();
+    
+    // Additionally, update the Bus Stops List (UL)
+    const busStopListUL = document.getElementById('busStopList');
+    busStopListUL.innerHTML = '';
+    stops.forEach(stop => {
+        let li = document.createElement('li');
+        li.className = 'p-2 border-b border-gray-100';
+        li.textContent = `${stop.name} (${stop.latitude}, ${stop.longitude})`;
+        busStopListUL.appendChild(li);
+    });
+}
+
+// Fetch Bus Stops from API and update both the multi-select list and Bus Stops List (UL)
+function fetchBusStops() {
+    fetch('/api/bus-stops/')
+        .then(response => response.json())
+        .then(data => {
+            populateBusStops(data);
+        });
+}
+function fetchBuses() {
+    const busList = document.getElementById('busList');
+    const modal = document.getElementById('modalBackdrop');
+    const modalContent = document.getElementById('modalContent');
+    const modalTitle = document.getElementById('modalTitle');
+    const closeModal = document.getElementById('closeModal');
+    
+    fetch('/api/buses/')
+        .then(response => response.json())
+        .then(data => {
+            busList.innerHTML = '';
+            
+            data.forEach((bus, index) => {
+                const li = document.createElement('li');
+                li.className = 'opacity-0 transform translate-y-4 transition-all duration-300';
+                
+                li.innerHTML = `
+                    <div class="bg-white border-2 border-gray-100 rounded-lg p-4 hover:border-pink-500 transition-colors cursor-pointer group">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold text-gray-800 group-hover:text-pink-600 transition-colors">${bus.number_plate}</h3>
+                                <p class="text-sm text-gray-500">Route: ${bus.route}</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm">
+                                    ${bus.capacity} seats
+                                </span>
+                                <svg class="w-5 h-5 text-gray-400 group-hover:text-pink-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Show bus details in modal
+                li.querySelector('div').addEventListener('click', () => {
+                    showBusDetails(bus);
+                });
+
+                busList.appendChild(li);
+
+                // Trigger entrance animation
+                setTimeout(() => {
+                    li.classList.remove('opacity-0', 'translate-y-4');
+                }, index * 50);
+            });
+        });
+
+    function showBusDetails(bus) {
+        modalTitle.textContent = `${bus.number_plate} - Route Details`;
+        
+        // Fetch associated stops for this bus
+        fetch(`/api/bus-stops/${bus.id}/`)
+            .then(response => response.json())
+            .then(stops => {
+                modalContent.innerHTML = `
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-lg font-medium text-gray-700">Route: ${bus.route}</h4>
+                            <span class="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm">
+                                ${bus.capacity} seats
+                            </span>
+                        </div>
+                        <div class="h-px bg-gray-200 my-4"></div>
+                        <div class="space-y-4">
+                            ${stops.length ? `
+                                <div class="relative">
+                                    ${stops.map((stop, index) => `
+                                        <div class="flex items-start mb-8 last:mb-0">
+                                            <div class="flex items-center">
+                                                <div class="flex flex-col items-center">
+                                                    <div class="w-8 h-8 rounded-full bg-pink-100 border-4 border-white flex items-center justify-center shadow">
+                                                        <span class="text-xs font-medium text-pink-600">${index + 1}</span>
+                                                    </div>
+                                                    ${index !== stops.length - 1 ? `
+                                                        <div class="w-px h-full bg-pink-200 relative top-2"></div>
+                                                    ` : ''}
+                                                </div>
+                                            </div>
+                                            <div class="ml-4 flex-grow">
+                                                <div class="bg-gray-50 rounded-lg p-4">
+                                                    <h5 class="font-medium text-gray-800">${stop.name}</h5>
+                                                    <p class="text-sm text-gray-500 mt-1">
+                                                        ${stop.latitude}, ${stop.longitude}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `
+                                <div class="text-center py-8">
+                                    <p class="text-gray-500">No stops assigned to this bus</p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+
+                // Show modal with animation
+                modal.style.display = 'flex';
+                requestAnimationFrame(() => {
+                    modal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0');
+                });
+            });
+    }
+
+    // Close modal handler
+    closeModal.addEventListener('click', () => {
+        const modalContainer = modal.querySelector('.modal-content');
+        modalContainer.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    });
+
+    // Close modal on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal.click();
+        }
+    });
+}
+
+
+
+// Form submission for adding bus stop
+document.getElementById('busStopForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const button = this.querySelector('button[type="submit"]');
+    const originalText = button.textContent;
+    button.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Adding Stop...
+    `;
+    button.disabled = true;
+
+    let stopName = document.getElementById('stopName').value;
+    let latitude = document.getElementById('latitude').value;
+    let longitude = document.getElementById('longitude').value;
+
+    fetch('/api/add-bus-stop/', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ 
+            name: stopName, 
+            latitude: latitude, 
+            longitude: longitude 
+        })
+    })
+    .then(response => {
+        if (!response.ok) { throw new Error('Network response was not ok'); }
+        return response.json();
+    })
+    .then(() => {
+        showNotification('Bus stop added successfully!', 'success');
+        fetchBusStops();
+        document.getElementById('busStopForm').reset();
+        if (marker) {
+            map.removeLayer(marker);
+            marker = null;
+        }
+    })
+    .catch(error => {
+        showNotification('Error adding bus stop. Please try again.', 'error');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+});
+
+// Form submission for adding bus
+document.getElementById('busForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const button = this.querySelector('button[type="submit"]');
+    const originalText = button.textContent;
+    button.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Adding Bus...
+    `;
+    button.disabled = true;
+
+    let busNumberPlate = document.getElementById('busNumberPlate').value;
+    let routeName = document.getElementById('routeName').value;
+    let capacity = document.getElementById('capacity').value;
+    // For simplicity, get selected stops from hidden input (comma-separated IDs)
+    let stops = document.getElementById('selectedStopsInput').value.split(',').filter(id => id);
+
+    fetch('/api/add-bus/', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ 
+            number_plate: busNumberPlate, 
+            route: routeName, 
+            capacity: capacity, 
+            stops: stops 
+        })
+    })
+    .then(response => {
+        if (!response.ok) { throw new Error('Network response was not ok'); }
+        return response.json();
+    })
+    .then(() => {
+        showNotification('Bus added successfully!', 'success');
+        fetchBuses();
+        document.getElementById('busForm').reset();
+    })
+    .catch(error => {
+        showNotification('Error adding bus. Please try again.', 'error');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+});
+
+// Notification system
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 max-w-sm p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-y-[-1rem] opacity-0
+        ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`;
+    
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                ${type === 'success' 
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
+                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                }
+            </svg>
+            <p class="font-medium">${message}</p>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+        notification.classList.remove('translate-y-[-1rem]', 'opacity-0');
+    });
+
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.classList.add('translate-y-[-1rem]', 'opacity-0');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const modal = document.getElementById('modalBackdrop');
+const closeModal = document.getElementById('closeModal');
+
+closeModal.addEventListener('click', () => {
+  const modalContainer = modal.querySelector('.modal-content');
+  modalContainer.classList.add('scale-95', 'opacity-0');
+  setTimeout(() => {
+    modal.style.display = 'none';
+    // Optionally, remove the animation classes so it resets when opened next time.
+    modalContainer.classList.remove('scale-95', 'opacity-0');
+  }, 300);
+});
+
+// Also close modal if clicking on backdrop
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) {
+    closeModal.click();
+  }
+});
+// Initial load
+fetchBusStops();
+fetchBuses();
+</script>
+{% endblock %}

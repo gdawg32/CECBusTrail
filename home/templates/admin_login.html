@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Admin Login{% endblock %}
+
+{% block content %}
+<div class="bg-gray-100 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8 bg-white rounded-xl shadow-lg p-8">
+    
+    <!-- Logo -->
+    <div class="flex justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-auto text-sky-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" >
+            <path d="M17 9.761v-4.761c0-2.761-2.238-5-5-5-2.763 0-5 2.239-5 5v4.761c-1.827 1.466-3 3.714-3 6.239 0 4.418 3.582 8 8 8s8-3.582 8-8c0-2.525-1.173-4.773-3-6.239zm-8-4.761c0-1.654 1.346-3 3-3s3 1.346 3 3v3.587c-.927-.376-1.938-.587-3-.587s-2.073.211-3 .587v-3.587zm3 17c-3.309 0-6-2.691-6-6s2.691-6 6-6 6 2.691 6 6-2.691 6-6 6zm2-6c0 1.104-.896 2-2 2s-2-.896-2-2 .896-2 2-2 2 .896 2 2z"/></svg>
+    </div>
+    
+    <!-- Title -->
+    <div class="text-center">
+      <h2 class="text-2xl font-bold text-gray-900">Admin Login</h2>
+    </div>
+    
+    <!-- Login Form -->
+    <form class="space-y-4" method="POST">
+      {% csrf_token %}
+      
+      <!-- Username Field -->
+      <div>
+        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+        <div class="mt-1">
+          <input type="text" name="username" id="username" required
+            class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+        </div>
+      </div>
+      
+      <!-- Password Field -->
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+        <div class="mt-1">
+          <input type="password" name="password" id="password" required
+            class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+        </div>
+      </div>
+      
+      <!-- Submit Button -->
+      <div>
+        <button type="submit"
+          class="w-full py-2 px-4 text-white bg-sky-900 rounded-md hover:bg-sky-800 focus:outline-none">
+          Sign in
+        </button>
+      </div>
+      
+    </form>
+  </div>
+</div>
+{% endblock %}

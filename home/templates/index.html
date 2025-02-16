@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Home{% endblock  %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class=" flex h-screen items-center justify-center bg-gradient-to-b from-white to-sky-100">
+    <div class="max-w-4xl text-center px-6">
+        <h1 class="mb-6 text-4xl sm:text-6xl font-bold text-gray-900 leading-tight">
+            Welcome to <span class="text-sky-900">CEC BusTrail</span>
+        </h1>
+        <p class="text-lg text-gray-700">
+            Track your college bus in real-time, stay updated, and travel safely with ease.
+        </p>
+        <div class="mt-6 flex flex-wrap justify-center gap-4">
+            <a href="{% url 'index' %}" class="rounded-lg px-6 py-3 font-medium bg-sky-900 text-white hover:bg-sky-800">
+                Track Bus
+            </a>
+            <a href="{% url 'index' %}" class="rounded-lg border px-6 py-3 font-medium border-gray-300 bg-white text-gray-900 hover:bg-gray-100">
+                Student Login
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-16 bg-sky-100">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+        <h2 class="text-3xl font-semibold text-gray-900 mb-8">Why Use CEC BusTrail?</h2>
+        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="p-6 bg-sky-50 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold text-sky-900">Live Tracking</h3>
+                <p class="text-gray-600 mt-2">Track your bus in real-time and never miss it again.</p>
+            </div>
+            <div class="p-6 bg-sky-50 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold text-sky-900">Safe & Secure</h3>
+                <p class="text-gray-600 mt-2">Ensuring student safety with verified routes and real-time monitoring.</p>
+            </div>
+            <div class="p-6 bg-sky-50 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold text-sky-900">Easy to Use</h3>
+                <p class="text-gray-600 mt-2">Simple interface for students, drivers, and admins.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-16 bg-sky-100">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+        <h2 class="text-3xl font-semibold text-gray-900 mb-8">What Our Students Say</h2>
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div class="p-6 bg-white rounded-lg shadow-md">
+                <p class="text-gray-700">"BusTrail made my daily commute stress-free! Love it!"</p>
+                <span class="block mt-4 text-sm font-semibold text-sky-900">- Arya, CSE 2022-26</span>
+            </div>
+            <div class="p-6 bg-white rounded-lg shadow-md">
+                <p class="text-gray-700">"The live tracking feature is a game changer!"</p>
+                <span class="block mt-4 text-sm font-semibold text-sky-900">- Rahul, EEE 2021-25</span>
+            </div>
+            <div class="p-6 bg-white rounded-lg shadow-md">
+                <p class="text-gray-700">"Super easy to use and keeps me updated!"</p>
+                <span class="block mt-4 text-sm font-semibold text-sky-900">- Meera, EC 2023-27</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
