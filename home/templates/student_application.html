@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-100 py-8">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+        <h2 class="text-2xl font-semibold text-center text-gray-900">Student Application Form</h2>
+        <p class="text-gray-600 text-center mt-1">Submit your application for bus transportation</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mt-4 p-3 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" class="mt-6 space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" name="full_name" required class="mt-1 block w-full p-3 border rounded-lg shadow-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" name="email" required class="mt-1 block w-full p-3 border rounded-lg shadow-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input type="text" name="phone" required class="mt-1 block w-full p-3 border rounded-lg shadow-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Batch Year</label>
+                <input type="text" name="batch_year" required placeholder="Example: 2022-26" class="mt-1 block w-full p-3 border rounded-lg shadow-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Branch</label>
+                <select name="branch" required class="mt-1 block w-full p-3 border rounded-lg shadow-sm">
+                    <option value="">Select your branch</option>
+                    {% for code, name in branch_choices %}
+                        <option value="{{ code }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Gender</label>
+                <select name="gender" required class="mt-1 block w-full p-3 border rounded-lg shadow-sm">
+                    <option value="">Select your gender</option>                    
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+            </div>
+
+            <div>
+<div>
+    <label class="block text-sm font-medium text-gray-700">Registered ID</label>
+    <input type="text" name="registered_id" required class="mt-1 block w-full p-3 border rounded-lg shadow-sm">
+</div>
+
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Preferred Bus Route</label>
+                <select name="bus_route" required class="mt-1 block w-full p-3 border rounded-lg shadow-sm">
+                    <option value="">Select a route</option>
+                    {% for bus in available_buses %}
+                        <option value="{{ bus.id }}">{{ bus.number_plate }} - {{ bus.route }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Preferred Bus Stop</label>
+                <select name="preferred_stop" required class="mt-1 block w-full p-3 border rounded-lg shadow-sm">
+                    <option value="">Select a bus stop</option>
+                    {% for stop in available_stops %}
+                        <option value="{{ stop.id }}">{{ stop.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="w-full py-3 mt-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700">
+                Submit Application
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

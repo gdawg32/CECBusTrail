@@ -39,6 +39,7 @@ class Student(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
+    registered_id = models.CharField(max_length=255, unique=True)
     batch_year = models.CharField(max_length=9)  # Example: '2022-26'
     branch = models.CharField(max_length=5, choices=BRANCH_CHOICES)
     bus = models.ForeignKey(Bus, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
@@ -86,3 +87,26 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.student.user.get_full_name()} - {self.semester} - ₹{self.fixed_fee}"
+
+class StudentApplication(models.Model):
+    BRANCH_CHOICES = [
+        ('CS', 'Computer Science'),
+        ('EC', 'Electronics and Communication'),
+        ('EEE', 'Electrical and Electronics'),
+        ('AD', 'Artificial Intelligence & Data Science'),
+    ]
+
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    registered_id = models.CharField(max_length=255)
+    phone = models.CharField(max_length=15)
+    batch_year = models.CharField(max_length=9)  # Example: '2022-26'
+    branch = models.CharField(max_length=5, choices=BRANCH_CHOICES)
+    
+    bus_route = models.ForeignKey("Bus", on_delete=models.SET_NULL, null=True, blank=True)
+    preferred_stop = models.ForeignKey("BusStop", on_delete=models.SET_NULL, null=True, blank=True)
+
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.full_name} ({self.batch_year} - {self.get_branch_display()})"

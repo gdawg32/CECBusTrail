@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-screen bg-gray-100">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
+        <!-- Header -->
+        <div class="border-b pb-4 mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Student Dashboard</h2>
+            <p class="text-gray-600">Manage your profile and view details</p>
+        </div>
+
+        <!-- Student Info -->
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-500 text-sm">Full Name</p>
+                    <p class="font-semibold">{{ student.user.get_full_name }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Username</p>
+                    <p class="font-semibold">{{ student.user.username }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Email</p>
+                    <p class="font-semibold">{{ student.user.email }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Batch Year</p>
+                    <p class="font-semibold">{{ student.batch_year }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Branch</p>
+                    <p class="font-semibold">{{ student.get_branch_display }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Assigned Bus</p>
+                    <p class="font-semibold">
+                        {% if student.bus %}
+                            {{ student.bus.number_plate }}
+                        {% else %}
+                            <span class="text-red-600">Not Assigned</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons: Edit Profile & Logout -->
+        <div class="mt-6 flex justify-between">
+            <a href="{% url 'edit_student_profile' %}"
+               class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition">
+                Edit Profile
+            </a>
+            <a href="{% url 'student_logout' %}"
+               class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
+                Logout
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

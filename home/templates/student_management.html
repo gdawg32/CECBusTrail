@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Page Title -->
+        <div class="mb-6 text-center sm:text-left">
+            <h1 class="text-3xl font-bold text-gray-900">Student Management</h1>
+            <p class="mt-1 text-gray-600">Review and manage student applications</p>
+        </div>
+
+        <!-- Success/Error Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Applications Table -->
+        <div class="bg-white rounded-xl shadow-md">
+            <div class="p-6 border-b border-gray-200 flex justify-between">
+                <h2 class="text-xl font-semibold text-gray-900">Pending Applications</h2>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left text-gray-600 uppercase text-xs tracking-wider">
+                            <th class="px-6 py-3">Full Name</th>
+                            <th class="px-6 py-3">Email</th>
+                            <th class="px-6 py-3">Phone</th>
+                            <th class="px-6 py-3">Batch Year</th>
+                            <th class="px-6 py-3">Branch</th>
+                            <th class="px-6 py-3">Bus Route</th>
+                            <th class="px-6 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for application in applications %}
+                        <tr class="hover:bg-gray-100">
+                            <td class="px-6 py-4 text-gray-900">{{ application.full_name }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ application.email }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ application.phone }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ application.batch_year }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ application.get_branch_display }}</td>
+                            <td class="px-6 py-4 text-gray-600">
+                                {% if application.bus_route %}
+                                    {{ application.bus_route.number_plate }} - {{ application.bus_route.route }}
+                                {% else %}
+                                    <span class="text-gray-500">Not Assigned</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium space-x-4">
+                                <a href="{% url 'approve_student' application.id %}" class="text-green-600 hover:text-green-900">Approve</a>
+                                <a href="{% url 'reject_student' application.id %}" class="text-red-600 hover:text-red-900">Reject</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                No student applications found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

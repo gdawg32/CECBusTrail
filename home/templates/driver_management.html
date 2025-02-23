@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6 text-center sm:text-left">
+            <h1 class="text-3xl font-bold text-gray-900">Driver Management</h1>
+            <p class="mt-1 text-gray-600">View and manage all bus drivers</p>
+        </div>
+
+        <!-- Success/Error Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Driver Form Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Add New Driver</h2>
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Username</label>
+                                <input type="text" name="username" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Password</label>
+                                <input type="password" name="password" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">First Name</label>
+                                    <input type="text" name="first_name" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                                    <input type="text" name="last_name" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email</label>
+                                <input type="email" name="email" required class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Assign Bus</label>
+                                <select name="bus" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">No Bus Assigned</option>
+                                    {% for bus in available_buses %}
+                                        <option value="{{ bus.id }}">{{ bus.number_plate }} - {{ bus.route }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit"
+                                    class="w-full py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Add Driver
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Edit Driver Modal -->
+            <div id="editDriverModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+                <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+                    <h2 class="text-xl font-semibold mb-4">Edit Driver</h2>
+                    <form id="editDriverForm">
+                        {% csrf_token %}
+                        <input type="hidden" id="editDriverId">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">First Name</label>
+                            <input type="text" id="editFirstName" class="w-full p-3 border rounded-lg">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                            <input type="text" id="editLastName" class="w-full p-3 border rounded-lg">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" id="editEmail" class="w-full p-3 border rounded-lg">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Assign Bus</label>
+                            <select id="editBus" class="w-full p-3 border rounded-lg">
+                                <option value="">No Bus Assigned</option>
+                                {% for bus in available_buses %}
+                                    <option value="{{ bus.id }}">{{ bus.number_plate }} - {{ bus.route }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="flex justify-end space-x-4">
+                            <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            
+            <!-- Drivers List Section -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-md">
+                    <div class="p-6 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between">
+                        <h2 class="text-xl font-semibold text-gray-900">Current Drivers</h2>
+                        <input type="text" id="searchDriver" placeholder="Search drivers..."
+                               class="mt-3 sm:mt-0 block w-full sm:w-64 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr class="text-left text-gray-600 uppercase text-xs tracking-wider">
+                                    <th class="px-6 py-3">Name</th>
+                                    <th class="px-6 py-3">Email</th>
+                                    <th class="px-6 py-3">Assigned Bus</th>
+                                    <th class="px-6 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for driver in drivers %}
+                                <tr class="hover:bg-gray-100">
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ driver.user.get_full_name }}</div>
+                                        <div class="text-sm text-gray-500">@{{ driver.user.username }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">{{ driver.user.email }}</td>
+                                    <td class="px-6 py-4">
+                                        {% if driver.bus %}
+                                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                {{ driver.bus.number_plate }}
+                                            </span>
+                                        {% else %}
+                                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                Not Assigned
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-medium space-x-4">
+                                        <button onclick="editDriver({{ driver.id }})" class="text-blue-600 hover:text-blue-900">Edit</button>
+                                        <button onclick="deleteDriver({{ driver.id }})" class="text-red-600 hover:text-red-900">Delete</button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                                        No drivers found. Add your first driver using the form.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function deleteDriver(driverId) {
+        if (confirm("Are you sure you want to delete this driver?")) {
+            window.location.href = `/delete-driver/${driverId}/`;
+        }
+    }
+
+    document.getElementById('searchDriver').addEventListener('keyup', function(e) {
+        const searchText = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const nameCell = row.querySelector('td:first-child');
+            row.style.display = nameCell.textContent.toLowerCase().includes(searchText) ? '' : 'none';
+        });
+    });
+
+    // Open Edit Modal with Driver Data
+function editDriver(driverId) {
+    fetch(`/get-driver/${driverId}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("editDriverId").value = driverId;
+            document.getElementById("editFirstName").value = data.first_name;
+            document.getElementById("editLastName").value = data.last_name;
+            document.getElementById("editEmail").value = data.email;
+            document.getElementById("editBus").value = data.bus_id || "";
+
+            document.getElementById("editDriverModal").classList.remove("hidden");
+        })
+        .catch(error => alert("Error fetching driver data!"));
+}
+
+// Close Modal
+function closeEditModal() {
+    document.getElementById("editDriverModal").classList.add("hidden");
+}
+
+// Handle Form Submission
+document.getElementById("editDriverForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const driverId = document.getElementById("editDriverId").value;
+    const formData = new FormData();
+    formData.append("first_name", document.getElementById("editFirstName").value);
+    formData.append("last_name", document.getElementById("editLastName").value);
+    formData.append("email", document.getElementById("editEmail").value);
+    formData.append("bus_id", document.getElementById("editBus").value);
+    formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+    fetch(`/edit-driver/${driverId}/`, {
+        method: "POST",
+        body: formData,
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert("Failed to update driver!");
+        }
+    });
+});
+
+</script>
+{% endblock %}

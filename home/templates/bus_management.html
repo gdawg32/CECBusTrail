@@ -99,32 +99,32 @@
                             </div>
 
                             <div class="relative">
-                                <label class="absolute left-2 top-0 px-2 text-sm bg-white text-gray-600 z-10">Select Stops (Multiple)</label>
-                                <div class="mt-1">
-                                    <div class="relative">
-                                        <input type="text" id="stopSearch" placeholder="Search stops..." class="w-full p-4 border-2 border-gray-200 rounded-t-lg focus:border-purple-500 focus:outline-none transition-colors">
-                                        <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="border-2 border-t-0 border-gray-200 rounded-b-lg bg-white overflow-hidden">
-                                        <!-- Selected stops section -->
-                                        <div id="selectedStops" class="px-3 py-2 border-b border-gray-200 space-y-2 min-h-[60px]">
-                                            <!-- Selected stops will be displayed here -->
-                                        </div>
-                                        
-                                        <!-- Available stops list -->
-                                        <div id="busStops" class="max-h-[300px] overflow-y-auto">
-                                            <div class="p-2 space-y-1">
-                                                <!-- Stops will be populated here -->
-                                            </div>
-                                        </div>
-                                    </div>
+                                <input
+                                  type="text"
+                                  id="stopSearch"
+                                  placeholder="Search stops..."
+                                  class="w-full p-4 border-2 border-gray-200 rounded-t-lg focus:border-purple-500 focus:outline-none transition-colors"
+                                />
+                                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                  </svg>
                                 </div>
-                            </div>
+                              </div>
+                              <div class="border-2 border-t-0 border-gray-200 rounded-b-lg bg-white overflow-hidden">
+                                <!-- Selected stops section -->
+                                <div id="selectedStops" class="px-3 py-2 border-b border-gray-200 space-y-2 min-h-[60px]">
+                                  <!-- Selected stops will be displayed here -->
+                                </div>
+                                <!-- Available stops list -->
+                                <div id="busStops" class="max-h-[300px] overflow-y-auto">
+                                  <div id="availableStops" class="p-2 space-y-1">
+                                    <!-- Available stops will be populated here -->
+                                  </div>
+                                </div>
+                              </div>
+                              
 
                             <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl">
                                 Add New Bus
@@ -214,90 +214,87 @@ map.on('click', function(e) {
     }
 });
 
-// Function to update available stops list and also update Bus Stops List (UL)
+let selectedStops = new Set();
+
 function populateBusStops(stops) {
-    // Populate stops for the multi-select section (in the right column)
-    const busStopsContainer = document.querySelector('#busStops .p-2');
-    const selectedStopsContainer = document.getElementById('selectedStops');
-    const searchInput = document.getElementById('stopSearch');
-    
-    // Create hidden input for form submission if not already created
-    let hiddenInput = document.getElementById('selectedStopsInput');
-    if (!hiddenInput) {
-        hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'selectedStops';
-        hiddenInput.id = 'selectedStopsInput';
-        document.getElementById('busStops').parentNode.appendChild(hiddenInput);
-    }
-    
-    let selectedStops = new Set();
-    
-    function updateSelectedStops() {
-        selectedStopsContainer.innerHTML = '';
-        hiddenInput.value = Array.from(selectedStops).join(',');
-        
-        Array.from(selectedStops).forEach(stopId => {
-            const stop = stops.find(s => s.id === stopId);
-            if (!stop) return;
-            
-            const chip = document.createElement('div');
-            chip.className = 'inline-flex items-center bg-purple-100 text-purple-800 rounded-full px-3 py-1 text-sm mr-2 mb-2';
-            chip.innerHTML = `
-                ${stop.name}
-                <button class="ml-2 focus:outline-none" data-stop-id="${stop.id}">
-                    <svg class="w-4 h-4 hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            `;
-            selectedStopsContainer.appendChild(chip);
-            
-            chip.querySelector('button').addEventListener('click', function() {
-                selectedStops.delete(stopId);
-                updateSelectedStops();
-                updateStopsList();
-            });
+  const availableStopsContainer = document.getElementById("availableStops");
+  const selectedStopsContainer = document.getElementById("selectedStops");
+  const searchInput = document.getElementById("stopSearch");
+
+  // Create hidden input for form submission if not already present
+  let hiddenInput = document.getElementById("selectedStopsInput");
+  if (!hiddenInput) {
+    hiddenInput = document.createElement("input");
+    hiddenInput.type = "hidden";
+    hiddenInput.name = "selectedStops";
+    hiddenInput.id = "selectedStopsInput";
+    selectedStopsContainer.parentNode.appendChild(hiddenInput);
+  }
+
+  // Update the selected stops display and hidden input
+  function updateSelectedStops() {
+    selectedStopsContainer.innerHTML = "";
+    hiddenInput.value = Array.from(selectedStops).join(",");
+    selectedStops.forEach((stopId) => {
+      const stop = stops.find((s) => s.id == stopId);
+      if (!stop) return;
+      const chip = document.createElement("div");
+      chip.className =
+        "inline-flex items-center bg-purple-100 text-purple-800 rounded-full px-3 py-1 text-sm mr-2 mb-2";
+      chip.innerHTML = `
+        ${stop.name}
+        <button class="ml-2 focus:outline-none" data-stop-id="${stop.id}">
+          <svg class="w-4 h-4 hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      `;
+      chip
+        .querySelector("button")
+        .addEventListener("click", () => {
+          selectedStops.delete(stop.id);
+          updateSelectedStops();
+          updateAvailableStops(searchInput.value);
         });
-    }
-    
-    function updateStopsList(searchTerm = '') {
-        busStopsContainer.innerHTML = '';
-        
-        stops.filter(stop => 
-            !selectedStops.has(stop.id) && 
-            stop.name.toLowerCase().includes(searchTerm.toLowerCase())
-        ).forEach(stop => {
-            const stopElement = document.createElement('div');
-            stopElement.className = 'p-2 hover:bg-gray-50 cursor-pointer rounded transition-colors flex items-center space-x-3';
-            stopElement.innerHTML = `
-                <div class="w-2 h-2 rounded-full bg-purple-500"></div>
-                <span class="flex-grow">${stop.name}</span>
-                <span class="text-sm text-gray-400">#${stop.id}</span>
-            `;
-            
-            stopElement.addEventListener('click', () => {
-                selectedStops.add(stop.id);
-                updateSelectedStops();
-                updateStopsList(searchInput.value);
-            });
-            
-            busStopsContainer.appendChild(stopElement);
-        });
-    }
-    
-    // Initial render for the multi-select stops section
-    updateStopsList();
-    
-    // Additionally, update the Bus Stops List (UL)
-    const busStopListUL = document.getElementById('busStopList');
-    busStopListUL.innerHTML = '';
-    stops.forEach(stop => {
-        let li = document.createElement('li');
-        li.className = 'p-2 border-b border-gray-100';
-        li.textContent = `${stop.name} (${stop.latitude}, ${stop.longitude})`;
-        busStopListUL.appendChild(li);
+      selectedStopsContainer.appendChild(chip);
     });
+  }
+
+  // Update available stops list based on search term and selected stops
+  function updateAvailableStops(searchTerm = "") {
+    availableStopsContainer.innerHTML = "";
+    stops
+      .filter(
+        (stop) =>
+          !selectedStops.has(stop.id) &&
+          stop.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .forEach((stop) => {
+        const div = document.createElement("div");
+        div.className =
+          "p-2 hover:bg-gray-50 cursor-pointer rounded transition-colors flex items-center space-x-3";
+        div.innerHTML = `
+          <div class="w-2 h-2 rounded-full bg-purple-500"></div>
+          <span class="flex-grow">${stop.name}</span>
+          <span class="text-sm text-gray-400">#${stop.id}</span>
+        `;
+        div.addEventListener("click", () => {
+          selectedStops.add(stop.id);
+          updateSelectedStops();
+          updateAvailableStops(searchInput.value);
+        });
+        availableStopsContainer.appendChild(div);
+      });
+  }
+
+  // Listen to search input changes
+  searchInput.addEventListener("input", (e) => {
+    updateAvailableStops(e.target.value);
+  });
+
+  // Initial render
+  updateAvailableStops();
+  updateSelectedStops();
 }
 
 // Fetch Bus Stops from API and update both the multi-select list and Bus Stops List (UL)

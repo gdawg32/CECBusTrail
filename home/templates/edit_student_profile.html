@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-screen bg-gray-100">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
+        <!-- Header -->
+        <div class="border-b pb-4 mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Edit Profile</h2>
+            <p class="text-gray-600">Update your details and change password</p>
+        </div>
+
+        <!-- Form -->
+        <form method="POST">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <!-- Full Name -->
+                <div>
+                    <label class="block text-gray-600 text-sm font-medium">Full Name</label>
+                    <input type="text" name="full_name" value="{{ student.user.get_full_name }}" required
+                           class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300">
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label class="block text-gray-600 text-sm font-medium">Email</label>
+                    <input type="email" name="email" value="{{ student.user.email }}" required
+                           class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300">
+                </div>
+
+                <!-- Batch Year -->
+                <div>
+                    <label class="block text-gray-600 text-sm font-medium">Batch Year</label>
+                    <input type="text" name="batch_year" value="{{ student.batch_year }}" required
+                           class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300">
+                </div>
+
+                <!-- Branch -->
+                <div>
+                    <label class="block text-gray-600 text-sm font-medium">Branch</label>
+                    <select name="branch" class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300">
+                        {% for code, name in student.BRANCH_CHOICES %}
+                            <option value="{{ code }}" {% if student.branch == code %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Change Password -->
+                <div>
+                    <label class="block text-gray-600 text-sm font-medium">New Password (Optional)</label>
+                    <input type="password" name="password" placeholder="Enter new password"
+                           class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300">
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="mt-6 flex justify-between">
+                <a href="{% url 'student_dashboard' %}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

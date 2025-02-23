@@ -6,6 +6,8 @@
     <title>CEC BusTrail</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 </head>
 <body class="bg-gray-100 font-sans">
     <!-- Navbar -->
@@ -23,7 +25,7 @@
                 <ul class="hidden lg:flex space-x-6">
                     <li><a href="/" class="hover:text-gray-300">Home</a></li>
                     <li><a href="#about" class="hover:text-gray-300">About</a></li>
-                    <li><a href="#features" class="hover:text-gray-300">Driver Login</a></li>
+                    <li><a href="{% url "driver_login" %}" class="hover:text-gray-300">Driver Login</a></li>
                     <li><a href="{% url "admin_login" %}" class="hover:text-gray-300">Admin Login</a></li>
                 </ul>
             </nav>
@@ -32,7 +34,7 @@
                 <ul class="bg-sky-800 text-white text-center py-3">
                     <li class="py-2"><a href="/" class="block hover:bg-sky-700">Home</a></li>
                     <li class="py-2"><a href="#about" class="block hover:bg-sky-700">About</a></li>
-                    <li class="py-2"><a href="#" class="block hover:bg-sky-700">Driver Login</a></li>
+                    <li class="py-2"><a href="{% url "driver_login" %}" class="block hover:bg-sky-700">Driver Login</a></li>
                     <li class="py-2"><a href="{% url "admin_login" %}" class="block hover:bg-sky-700">Admin Login</a></li>
                 </ul>
             </div>
