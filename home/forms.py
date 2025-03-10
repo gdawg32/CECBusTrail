@@ -1,5 +1,5 @@
 from django import forms
-from .models import BusStop, Bus, Driver
+from .models import BusStop, Bus, Driver, Payment
 
 class BusStopForm(forms.ModelForm):
     class Meta:
@@ -36,3 +36,24 @@ class DriverForm(forms.ModelForm):
             # Include current bus in queryset
             if self.instance.bus:
                 self.fields['bus'].queryset = self.fields['bus'].queryset | Bus.objects.filter(pk=self.instance.bus.pk)
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = Payment
+        fields = ['semester', 'distance_category']
+
+        widgets = {
+            'semester': forms.HiddenInput(),
+            'distance_category': forms.HiddenInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        student = kwargs.pop('student', None)
+        super().__init__(*args, **kwargs)
+
+        if student:
+            paid_sems = student.payments.values_list('semester', flat=True)
+            # Allow only unpaid semesters to be accepted
+            self.fields['semester'].choices = [
+                (sem, sem) for sem in Payment.SEMESTER_CHOICES if sem[0] not in paid_sems
+            ]

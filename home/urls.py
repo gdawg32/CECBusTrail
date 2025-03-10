@@ -5,7 +5,7 @@ from . import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('admin_login', views.admin_login, name='admin_login'),
-    path('admin_dashboard', views.admin_dashboard, name='admin_dashboard'),
+    path('admin_dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin-logout/', views.admin_logout, name='admin_logout'),
     path('bus_management', views.bus_management, name='bus_management'),
     path('api/bus-stops/', views.get_bus_stops, name="bus-stops"),
@@ -23,11 +23,13 @@ urlpatterns = [
     path("driver-dashboard/", views.driver_dashboard, name="driver_dashboard"),
     path("student-application/", views.student_application, name="student_application"),
     path("admin_dashboard/student-management/", views.student_management, name="student_management"),
+    path('advance-semester/', views.advance_semester, name='advance_semester'),
     path("admin_dashboard/approve-student/<int:application_id>/", views.approve_student, name="approve_student"),
     path("admin_dashboard/reject-student/<int:application_id>/", views.reject_student, name="reject_student"),
     path("student/login/", views.student_login, name="student_login"),
     path("student/dashboard/", views.student_dashboard, name="student_dashboard"),
     path("student/logout/", views.student_logout, name="student_logout"),
     path("edit-profile/", views.edit_student_profile, name="edit_student_profile"),
+    path('student/payment/', views.student_payment, name='student_payment'),
 
 ]

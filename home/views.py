@@ -8,7 +8,22 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from math import radians, sin, cos, sqrt, atan2
+
 # Create your views here.
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    R = 6371  # Earth radius in kilometers
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+
+    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    distance_km = R * c
+    return distance_km
+
+
+
 
 def index(request):
     return render(request, "index.html")
@@ -232,6 +247,7 @@ def student_application(request):
         bus_id = request.POST.get("bus_route")
         stop_id = request.POST.get("preferred_stop")
         registered_id = request.POST.get("registered_id")
+        semester = request.POST.get("semester")
 
         bus_route = Bus.objects.get(id=bus_id) if bus_id else None
         preferred_stop = BusStop.objects.get(id=stop_id) if stop_id else None
@@ -241,7 +257,9 @@ def student_application(request):
             full_name=full_name, email=email, phone=phone,
             batch_year=batch_year, branch=branch,
             bus_route=bus_route, preferred_stop=preferred_stop,
-            registered_id=registered_id
+            registered_id=registered_id,
+            semester=semester
+
         )
         application.save()
 
@@ -283,6 +301,9 @@ def approve_student(request, application_id):
         batch_year=application.batch_year,
         branch=application.branch,
         bus=application.bus_route,
+        bus_stop=application.preferred_stop,
+        registered_id=application.registered_id,
+        semester=application.semester
     )
 
     # Remove the approved application
@@ -299,6 +320,27 @@ def reject_student(request, application_id):
     messages.success(request, "Student application rejected!")
     return redirect("student_management")
 
+
+def advance_semester(request):
+    students = Student.objects.all()
+    removed_count = 0
+    updated_count = 0
+
+    for student in students:
+        try:
+            current_sem = int(student.semester.strip().split()[-1])  # e.g., "Sem 5" -> 5
+            if current_sem >= 8:
+                student.user.delete()
+                removed_count += 1
+            else:
+                student.semester = f"Sem {current_sem + 1}"
+                student.save()
+                updated_count += 1
+        except:
+            continue  # skip malformed semesters
+
+    messages.success(request, f"{updated_count} students advanced, {removed_count} students removed.")
+    return redirect('admin_dashboard')  # or wherever you want to go after
 
 def student_login(request):
 
@@ -318,13 +360,24 @@ def student_login(request):
 
 @login_required
 def student_dashboard(request):
-    try:
-        student = request.user.student_profile  # Get the Student profile
-    except Student.DoesNotExist:
-        messages.error(request, "No student profile found.")
-        return redirect("student_login")
+    student = request.user.student_profile
+    distance_km = None
 
-    return render(request, "student_dashboard.html", {"student": student})
+    if student.bus_stop:
+        stop_lat = float(student.bus_stop.latitude)
+        stop_lon = float(student.bus_stop.longitude)
+        college_lat = 9.743520
+        college_lon = 76.281570
+
+        straight_km = haversine_distance(stop_lat, stop_lon, college_lat, college_lon)
+        adjusted_km = round(straight_km * 1.4, 2)  # Apply road correction
+
+        distance_km = adjusted_km
+
+    return render(request, "student_dashboard.html", {
+        "student": student,
+        "distance_km": distance_km,
+    })
 
 def student_logout(request):
     logout(request)
@@ -358,3 +411,114 @@ def edit_student_profile(request):
         return redirect("student_dashboard")
 
     return render(request, "edit_student_profile.html", {"student": student})
+
+def get_distance_category(distance):
+    # Define your range brackets
+    brackets = [
+        (0, 5, '0-5'),
+        (5, 10, '5-10'),
+        (10, 15, '10-15'),
+        (15, 20, '15-20'),
+        (20, 25, '20-25'),
+        (25, 30, '25-30'),
+        (30, 35, '30-35'),
+        (35, 40, '35-40'),
+        (40, 1000, '40+'),
+    ]
+    for low, high, label in brackets:
+        if low <= distance < high:
+            return label
+    return '0-5'  # Fallback
+
+@login_required
+def student_payment(request):
+    student = request.user.student_profile
+    
+    # 1. Get paid & unpaid semesters
+    paid_sems = student.payments.values_list('semester', flat=True)
+    all_sems = [sem[0] for sem in Payment.SEMESTER_CHOICES]
+    unpaid_sems = [sem for sem in all_sems if sem not in paid_sems]
+
+    # 2. Calculate distance to college and fee
+    distance_km = None
+    distance_category = '0-5'  # default
+    fee_category, fee_amount = '0-5', 2000  # default
+
+    if student.bus_stop:
+        college_lat, college_lon = 9.743520, 76.281570
+        stop_lat = float(student.bus_stop.latitude)
+        stop_lon = float(student.bus_stop.longitude)
+        straight_km = haversine_distance(stop_lat, stop_lon, college_lat, college_lon)
+        adjusted_km = straight_km * 1.4  # apply real-world correction factor
+        distance_km = round(adjusted_km, 2)
+        distance_category = get_distance_category(distance_km)
+        fee_category, fee_amount = calculate_fee_by_distance(distance_km)
+
+    # 3. Handle Payment Submission
+    current_sem = student.semester  # assuming student has a current semester field
+
+    if request.method == 'POST':
+        if current_sem not in paid_sems:
+            # create and save payment
+            payment = Payment(
+                student=student,
+                semester=current_sem,
+                distance_category=distance_category
+            )
+            payment.save()
+            messages.success(request, f'Payment for {current_sem} successful!')
+            return redirect('student_payment')
+        else:
+            messages.error(request, 'Invalid or already paid semester.')
+
+    # 4. Prepare form only if unpaid
+    form = PaymentForm(student=student) if current_sem not in paid_sems else None
+
+    payments = student.payments.all().order_by('-date_paid')
+    return render(request, 'make_payment.html', {
+        'form': form,
+        'payments': payments,
+        'unpaid_sems': unpaid_sems,
+        'distance_km': distance_km,
+        'distance_category': distance_category,
+        'fee': fee_amount,
+        'student': student
+    })
+
+def calculate_fee_by_distance(distance_km):
+    """
+    Returns the distance category and corresponding fee for the given distance.
+    """
+    distance_fee_map = {
+        '0-5': 2000,
+        '5-10': 2500,
+        '10-15': 3000,
+        '15-20': 3500,
+        '20-25': 4000,
+        '25-30': 4500,
+        '30-35': 5000,
+        '35-40': 5500,
+        '40+': 6000,
+    }
+
+    if distance_km <= 5:
+        category = '0-5'
+    elif distance_km <= 10:
+        category = '5-10'
+    elif distance_km <= 15:
+        category = '10-15'
+    elif distance_km <= 20:
+        category = '15-20'
+    elif distance_km <= 25:
+        category = '20-25'
+    elif distance_km <= 30:
+        category = '25-30'
+    elif distance_km <= 35:
+        category = '30-35'
+    elif distance_km <= 40:
+        category = '35-40'
+    else:
+        category = '40+'
+
+    fee = distance_fee_map[category]
+    return category, fee

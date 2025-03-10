@@ -40,6 +40,18 @@
                         {% else %}
                             <span class="text-red-600">Not Assigned</span>
                         {% endif %}
+
+                        <p class="text-gray-500 text-sm">Bus Stop</p>
+                        <p class="font-semibold">
+    
+                            
+                        {% if student.bus_stop %}
+                            {{ student.bus_stop.name }}
+                            {% if distance_km %}
+                                <p><strong>Distance to College:</strong> {{ distance_km }} km</p>
+                            {% endif %}
+                        {% endif %}
+
                     </p>
                 </div>
             </div>
@@ -51,6 +63,11 @@
                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition">
                 Edit Profile
             </a>
+            <a href="{% url 'student_payment' %}"
+               class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition">
+                Make Payment
+            </a>
+            
             <a href="{% url 'student_logout' %}"
                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
                 Logout

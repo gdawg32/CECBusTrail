@@ -43,6 +43,8 @@ class Student(models.Model):
     batch_year = models.CharField(max_length=9)  # Example: '2022-26'
     branch = models.CharField(max_length=5, choices=BRANCH_CHOICES)
     bus = models.ForeignKey(Bus, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
+    bus_stop = models.ForeignKey(BusStop, on_delete=models.SET_NULL, null=True, blank=True)
+    semester = models.CharField(max_length=10, blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.batch_year} - {self.get_branch_display()})"
@@ -102,7 +104,7 @@ class StudentApplication(models.Model):
     phone = models.CharField(max_length=15)
     batch_year = models.CharField(max_length=9)  # Example: '2022-26'
     branch = models.CharField(max_length=5, choices=BRANCH_CHOICES)
-    
+    semester = models.CharField(max_length=10, blank=True, null=True)
     bus_route = models.ForeignKey("Bus", on_delete=models.SET_NULL, null=True, blank=True)
     preferred_stop = models.ForeignKey("BusStop", on_delete=models.SET_NULL, null=True, blank=True)
 
