@@ -17,7 +17,7 @@ class Bus(models.Model):
     capacity = models.PositiveIntegerField()
     current_location = models.CharField(max_length=255, blank=True, null=True)  # Stores live GPS location
     stops = models.ManyToManyField(BusStop, related_name='buses')  # Many buses can share stops
-
+    tracking_enabled = models.BooleanField(default=False)
     def __str__(self):
         return f"{self.number_plate} - {self.route}"
 

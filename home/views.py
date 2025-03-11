@@ -231,7 +231,43 @@ def driver_logout(request):
 
 @login_required
 def driver_dashboard(request):
-    return render(request, "driver_dashboard.html")
+    try:
+        driver = request.user.driver_profile  # Get the driver's profile
+        bus = driver.bus  # Get assigned bus (can be None)
+    except Driver.DoesNotExist:
+        driver = None
+        bus = None
+
+    return render(request, "driver_dashboard.html", {
+        'driver': driver,
+        'bus': bus,
+    })
+
+@login_required
+def toggle_tracking(request):
+    try:
+        driver = request.user.driver_profile
+        bus = driver.bus
+        if not bus:
+            messages.error(request, "You are not assigned to any bus.")
+            return redirect('driver_dashboard')
+
+        # If tracking is already on, turn it off
+        if bus.tracking_enabled:
+            bus.tracking_enabled = False
+            bus.save()
+            messages.success(request, "Tracking turned OFF for your bus.")
+        else:
+            # Turn off tracking for any other bus first
+            Bus.objects.filter(tracking_enabled=True).update(tracking_enabled=False)
+            bus.tracking_enabled = True
+            bus.save()
+            messages.success(request, "Tracking turned ON for your bus.")
+
+    except Driver.DoesNotExist:
+        messages.error(request, "Driver profile not found.")
+
+    return redirect('driver_dashboard')
 
 def student_application(request):
     available_buses = Bus.objects.all()
@@ -522,3 +558,62 @@ def calculate_fee_by_distance(distance_km):
 
     fee = distance_fee_map[category]
     return category, fee
+
+@csrf_exempt
+@login_required
+def update_bus_location(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            lat = data.get("latitude")
+            lon = data.get("longitude")
+
+            if not lat or not lon:
+                return JsonResponse({'error': 'Latitude or longitude missing'}, status=400)
+
+            driver = request.user.driver_profile
+            bus = driver.bus
+
+            if bus:
+                bus.current_location = f"{lat},{lon}"
+                bus.tracking_enabled = True
+                bus.save()
+                return JsonResponse({'status': 'success'})
+
+            return JsonResponse({'error': 'No bus assigned'}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+def get_bus_location(request, bus_id):
+    try:
+        bus = Bus.objects.get(id=bus_id, tracking_enabled=True)
+        if bus.current_location:
+            lat, lon = map(float, bus.current_location.split(','))
+            return JsonResponse({'latitude': lat, 'longitude': lon})
+        else:
+            return JsonResponse({'error': 'Location not available'}, status=404)
+    except Bus.DoesNotExist:
+        return JsonResponse({'error': 'Bus not found'}, status=404)
+
+@csrf_exempt
+@login_required
+def stop_bus_tracking(request):
+    if request.method == 'POST':
+        driver = request.user.driver_profile
+        bus = driver.bus
+        if bus:
+            bus.tracking_enabled = False
+            bus.current_location = None
+            bus.save()
+            return JsonResponse({'status': 'stopped'})
+    return JsonResponse({'status': 'failed'}, status=400)
+
+def track_bus(request):
+    buses = Bus.objects.filter(tracking_enabled=True)
+    return render(request, 'track_bus.html', {'buses': buses})
+
+def payment_transactions(request):
+    payments = Payment.objects.select_related('student__user').order_by('-date_paid')
+    return render(request, 'payment_transactions.html', {'payments': payments})

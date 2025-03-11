@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">All Payment Transactions</h2>
+                <p class="text-sm text-gray-500">View payment history of all students</p>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-100 text-gray-600 uppercase tracking-wider">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Student</th>
+                        <th class="px-4 py-3 text-left">Semester</th>
+                        <th class="px-4 py-3 text-left">Branch</th>
+                        <th class="px-4 py-3 text-left">Batch</th>
+                        <th class="px-4 py-3 text-left">Distance</th>
+                        <th class="px-4 py-3 text-left">Amount</th>
+                        <th class="px-4 py-3 text-left">Date Paid</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for payment in payments %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 font-medium text-gray-900">
+                                {{ payment.student.user.get_full_name }}<br>
+                                <span class="text-xs text-gray-500">@{{ payment.student.user.username }}</span>
+                            </td>
+                            <td class="px-4 py-3">{{ payment.semester }}</td>
+                            <td class="px-4 py-3">{{ payment.student.get_branch_display }}</td>
+                            <td class="px-4 py-3">{{ payment.student.batch_year }}</td>
+                            <td class="px-4 py-3">{{ payment.distance_category }}</td>
+                            <td class="px-4 py-3 font-semibold text-green-600">₹{{ payment.fixed_fee }}</td>
+                            <td class="px-4 py-3 text-gray-500">{{ payment.date_paid|date:"M d, Y h:i A" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-6 text-gray-400">No payments found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

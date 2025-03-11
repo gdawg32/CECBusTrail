@@ -26,10 +26,17 @@ urlpatterns = [
     path('advance-semester/', views.advance_semester, name='advance_semester'),
     path("admin_dashboard/approve-student/<int:application_id>/", views.approve_student, name="approve_student"),
     path("admin_dashboard/reject-student/<int:application_id>/", views.reject_student, name="reject_student"),
+    path('admin_dashboard/payment-transactions/', views.payment_transactions, name='payment_transactions'),
     path("student/login/", views.student_login, name="student_login"),
     path("student/dashboard/", views.student_dashboard, name="student_dashboard"),
     path("student/logout/", views.student_logout, name="student_logout"),
     path("edit-profile/", views.edit_student_profile, name="edit_student_profile"),
     path('student/payment/', views.student_payment, name='student_payment'),
+    path('driver/toggle-tracking/', views.toggle_tracking, name='toggle_tracking'),
+    path('driver/update-location/', views.update_bus_location, name='update_bus_location'),
+    path('track-bus/<int:bus_id>/', views.get_bus_location, name='get_bus_location'),
+    path('driver/stop-tracking/', views.stop_bus_tracking, name='stop_bus_tracking'),
+    path('track-bus/', views.track_bus, name='track_bus'),
+    path('api/bus-location/<int:bus_id>/', views.get_bus_location, name='get_bus_location'),
 
 ]
