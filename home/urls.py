@@ -38,5 +38,7 @@ urlpatterns = [
     path('driver/stop-tracking/', views.stop_bus_tracking, name='stop_bus_tracking'),
     path('track-bus/', views.track_bus, name='track_bus'),
     path('api/bus-location/<int:bus_id>/', views.get_bus_location, name='get_bus_location'),
+    path('track-student-bus/', views.track_student_bus, name='track_student_bus'),
+
 
 ]

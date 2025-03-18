@@ -11,7 +11,7 @@
         <!-- Main Content Card -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
             <!-- Bus Selection Section -->
-            <div class="bg-blue-600 px-6 py-4">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4">
                 <div class="flex flex-col md:flex-row items-center gap-4">
                     <div class="flex-1">
                         <label for="busSelect" class="block text-sm font-medium text-blue-100 mb-1">Select a Bus to Track</label>
@@ -38,6 +38,29 @@
                 <div class="relative">
                     <div id="map" class="h-96 md:h-[500px] w-full rounded-xl overflow-hidden shadow-inner border border-gray-300"></div>
                     
+                    <!-- Map Control Buttons -->
+                    <div class="absolute top-4 right-4 flex flex-col gap-2">
+                        <!-- Style Selector -->
+                        <div class="bg-white rounded-lg shadow-md">
+                            <select id="mapStyleSelect" class="text-sm font-medium text-gray-700 px-3 py-2 rounded-lg border-0 focus:ring-2 focus:ring-blue-500">
+                                <option value="streets">Streets</option>
+                                <option value="satellite">Satellite</option>
+                                <option value="dark">Dark</option>
+                                <option value="terrain">Terrain</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Auto-center Toggle -->
+                        <div class="bg-white rounded-lg shadow-md">
+                            <button id="centerMapBtn" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                Center Map
+                            </button>
+                        </div>
+                    </div>
+                    
                     <!-- Tracking Status Overlay -->
                     <div id="statusText" class="absolute bottom-4 left-4 bg-white bg-opacity-90 px-4 py-2 rounded-lg shadow-md hidden">
                         <div class="flex items-center">
@@ -48,21 +71,11 @@
                             <p class="text-gray-800 font-medium">Tracking in progress...</p>
                         </div>
                     </div>
-                    
-                    <!-- Auto-center Toggle -->
-                    <div class="absolute top-4 right-4 bg-white rounded-lg shadow-md">
-                        <button id="centerMapBtn" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                            Center Map
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Bus Details Panel (shows when tracking) -->
                 <div id="busDetailsPanel" class="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 hidden">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                         <div class="p-3 bg-white rounded-lg shadow-sm">
                             <p class="text-xs text-gray-500 font-medium">Bus Number</p>
                             <p id="busNumberDisplay" class="text-lg font-bold text-gray-800">--</p>
@@ -74,6 +87,10 @@
                         <div class="p-3 bg-white rounded-lg shadow-sm">
                             <p class="text-xs text-gray-500 font-medium">Last Updated</p>
                             <p id="lastUpdatedDisplay" class="text-lg font-bold text-gray-800">--</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg shadow-sm">
+                            <p class="text-xs text-gray-500 font-medium">Est. Arrival</p>
+                            <p id="estimatedArrivalDisplay" class="text-lg font-bold text-gray-800">--</p>
                         </div>
                     </div>
                 </div>
@@ -93,36 +110,87 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // Initialize map with a custom style
-    let map = L.map('map').setView([9.743520, 76.281570], 13);
+    // Initialize map
+    let map = L.map('map', {
+        zoomControl: false,  // We'll add custom zoom control
+    }).setView([9.743520, 76.281570], 13);
+    
+    // Add custom zoom control
+    L.control.zoom({
+        position: 'bottomright'
+    }).addTo(map);
+    
     let marker;
     let trackingInterval = null;
     let autoCenter = true;
+    let mapLayers = {};
+    let currentLayer = null;
+    let busPath = null;
+    let routePoints = [];
+    
+    // UI elements
     const statusText = document.getElementById('statusText');
     const busDetailsPanel = document.getElementById('busDetailsPanel');
     const busNumberDisplay = document.getElementById('busNumberDisplay');
     const busRouteDisplay = document.getElementById('busRouteDisplay');
     const lastUpdatedDisplay = document.getElementById('lastUpdatedDisplay');
+    const estimatedArrivalDisplay = document.getElementById('estimatedArrivalDisplay');
     const busInfo = document.getElementById('busInfo');
     const centerMapBtn = document.getElementById('centerMapBtn');
+    const mapStyleSelect = document.getElementById('mapStyleSelect');
 
-    // Use a better-looking map style
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }).addTo(map);
+    // Define map styles
+    mapLayers = {
+        streets: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }),
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            maxZoom: 19
+        }),
+        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }),
+        terrain: L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.png', {
+            attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            subdomains: 'abcd',
+            maxZoom: 18
+        })
+    };
+
+    // Set default map style
+    currentLayer = mapLayers.streets;
+    currentLayer.addTo(map);
+
+    // Map style selector
+    mapStyleSelect.addEventListener('change', function() {
+        const style = this.value;
+        if (mapLayers[style]) {
+            if (currentLayer) {
+                map.removeLayer(currentLayer);
+            }
+            currentLayer = mapLayers[style];
+            currentLayer.addTo(map);
+        }
+    });
 
     // Custom bus icon
     const busIcon = L.divIcon({
-        html: `<div class="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full shadow-lg border-2 border-white">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 5h8m-4 5h4M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+        html: `<div class="relative">
+                <div class="w-10 h-10 bg-blue-600 text-white rounded-full shadow-lg border-2 border-white flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 5h8m-4 5h4M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div class="w-16 h-16 bg-blue-400 bg-opacity-30 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-ping"></div>
                </div>`,
         className: '',
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
     });
 
     // Detect when user interacts with the map
@@ -142,9 +210,13 @@
         const busId = this.value;
         const busSelect = document.getElementById('busSelect');
         
+        // Clean up previous tracking
+        if (trackingInterval) clearInterval(trackingInterval);
+        if (marker) map.removeLayer(marker);
+        if (busPath) map.removeLayer(busPath);
+        routePoints = [];
+        
         if (!busId) {
-            if (marker) map.removeLayer(marker);
-            clearInterval(trackingInterval);
             statusText.classList.add('hidden');
             busDetailsPanel.classList.add('hidden');
             busInfo.classList.remove('hidden');
@@ -162,11 +234,11 @@
         const busDetails = selectedOption.text.split(' - ');
         busNumberDisplay.textContent = busDetails[0] || '--';
         busRouteDisplay.textContent = busDetails[1] || '--';
+        estimatedArrivalDisplay.textContent = 'Calculating...';
         
         // Start tracking
         fetchAndUpdateLocation(busId);
         
-        if (trackingInterval) clearInterval(trackingInterval);
         trackingInterval = setInterval(() => fetchAndUpdateLocation(busId), 1000);
     });
 
@@ -176,14 +248,23 @@
             .then(data => {
                 const lat = data.latitude;
                 const lon = data.longitude;
-
+                
                 // Update last updated time
                 const now = new Date();
                 lastUpdatedDisplay.textContent = now.toLocaleTimeString();
+                
+                // Calculate estimated arrival (mock data)
+                const randomMinutes = Math.floor(Math.random() * 15) + 5;
+                estimatedArrivalDisplay.textContent = `~${randomMinutes} minutes`;
 
+                // Add to route points for drawing path
+                routePoints.push([lat, lon]);
+                
+                // Create or update marker
                 if (!marker) {
                     marker = L.marker([lat, lon], {icon: busIcon}).addTo(map);
-                    // Add a circle to represent accuracy
+                    
+                    // Add accuracy circle
                     L.circle([lat, lon], {
                         radius: 50,
                         color: '#3b82f6',
@@ -195,8 +276,23 @@
                     marker.setLatLng([lat, lon]);
                 }
 
+                // Draw or update bus path
+                if (routePoints.length > 1) {
+                    if (busPath) {
+                        map.removeLayer(busPath);
+                    }
+                    busPath = L.polyline(routePoints, {
+                        color: '#2563eb',
+                        weight: 4,
+                        opacity: 0.7,
+                        lineCap: 'round',
+                        lineJoin: 'round',
+                        dashArray: '0, 10'
+                    }).addTo(map);
+                }
+
                 if (autoCenter) {
-                    map.setView([lat, lon]);  // Keep current zoom
+                    map.setView([lat, lon], map.getZoom());
                 }
             })
             .catch(err => {
@@ -204,6 +300,253 @@
                 lastUpdatedDisplay.textContent = 'Connection error';
             });
     }
+
+    // Add pop-up information when clicking on the bus marker
+    map.on('click', function(e) {
+        if (marker && marker.getLatLng().distanceTo(e.latlng) < 50) {
+            const popupContent = `
+                <div class="p-2">
+                    <h3 class="font-bold text-gray-800">${busNumberDisplay.textContent}</h3>
+                    <p class="text-sm text-gray-600">Route: ${busRouteDisplay.textContent}</p>
+                    <p class="text-sm text-gray-600">Last updated: ${lastUpdatedDisplay.textContent}</p>
+                </div>
+            `;
+            
+            L.popup()
+                .setLatLng(marker.getLatLng())
+                .setContent(popupContent)
+                .openOn(map);
+        }
+    });
+
+    // Add geolocation control
+    L.control.locate = function(options) {
+        return new L.Control.Locate(options);
+    };
+
+    L.Control.Locate = L.Control.extend({
+        options: {
+            position: 'bottomright'
+        },
+
+        onAdd: function(map) {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            this._container = container;
+            
+            const button = L.DomUtil.create('a', 'locate-button', container);
+            button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 3l-6 6m0 0V4m0 5h5M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" />
+            </svg>`;
+            button.href = '#';
+            button.title = 'Show my location';
+            button.setAttribute('role', 'button');
+            button.setAttribute('aria-label', 'Show my location');
+            
+            L.DomEvent.on(button, 'click', L.DomEvent.stop)
+                .on(button, 'click', this._findLocation, this);
+
+            return container;
+        },
+
+        _findLocation: function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        
+                        // Add user location marker
+                        const userMarker = L.marker([userLat, userLng], {
+                            icon: L.divIcon({
+                                html: `<div class="w-6 h-6 bg-red-500 rounded-full border-2 border-white"></div>`,
+                                className: '',
+                                iconSize: [24, 24],
+                                iconAnchor: [12, 12]
+                            })
+                        }).addTo(map);
+                        
+                        userMarker.bindPopup('Your location').openPopup();
+                        
+                        // Center map on user location
+                        map.setView([userLat, userLng], 15);
+                        
+                        // If bus is tracking, calculate distance to bus
+                        if (marker) {
+                            const busLat = marker.getLatLng().lat;
+                            const busLng = marker.getLatLng().lng;
+                            
+                            // Calculate distance (in meters)
+                            const distance = map.distance([userLat, userLng], [busLat, busLng]);
+                            const distanceKm = (distance / 1000).toFixed(1);
+                            
+                            // Show distance to bus
+                            userMarker.bindPopup(`Your location<br>Distance to bus: ${distanceKm} km`).openPopup();
+                        }
+                    },
+                    (error) => {
+                        console.error('Error getting location:', error);
+                        alert('Unable to get your location. Please check your browser permissions.');
+                    }
+                );
+            } else {
+                alert('Geolocation is not supported by this browser.');
+            }
+        }
+    });
+
+    // Add custom controls
+    L.control.locate().addTo(map);
+
+    // Add custom scale control
+    L.control.scale({
+        imperial: false,
+        position: 'bottomleft'
+    }).addTo(map);
+
+    // Add a control to see nearby stops
+    L.Control.NearbyStops = L.Control.extend({
+        options: {
+            position: 'topright'
+        },
+
+        onAdd: function(map) {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            const button = L.DomUtil.create('a', 'nearby-stops-button', container);
+            button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>`;
+            button.href = '#';
+            button.title = 'Show nearby stops';
+            
+            L.DomEvent.on(button, 'click', L.DomEvent.stop)
+                .on(button, 'click', this._showNearbyStops, this);
+                
+            return container;
+        },
+        
+        _showNearbyStops: function() {
+            // Mock data for demonstration
+            const stops = [
+                { name: 'Main Gate', lat: 9.745, lng: 76.283 },
+                { name: 'Library', lat: 9.742, lng: 76.279 },
+                { name: 'Cafeteria', lat: 9.744, lng: 76.280 }
+            ];
+            
+            // Clear existing stop markers
+            if (this._stopMarkers) {
+                this._stopMarkers.forEach(marker => map.removeLayer(marker));
+            }
+            
+            this._stopMarkers = [];
+            
+            // Add stop markers
+            stops.forEach(stop => {
+                const stopMarker = L.marker([stop.lat, stop.lng], {
+                    icon: L.divIcon({
+                        html: `<div class="w-6 h-6 bg-yellow-500 text-white rounded-full border-2 border-white flex items-center justify-center text-xs font-bold">S</div>`,
+                        className: '',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(map);
+                
+                stopMarker.bindPopup(`<b>${stop.name}</b><br>Bus Stop`);
+                this._stopMarkers.push(stopMarker);
+            });
+            
+            // Fit map to include all stops
+            if (this._stopMarkers.length > 0) {
+                const group = new L.featureGroup(this._stopMarkers);
+                map.fitBounds(group.getBounds().pad(0.2));
+            }
+        }
+    });
+
+    L.control.nearbyStops = function(options) {
+        return new L.Control.NearbyStops(options);
+    };
+
+    L.control.nearbyStops().addTo(map);
+
+    // Add fullscreen control
+    L.Control.Fullscreen = L.Control.extend({
+        options: {
+            position: 'topright'
+        },
+
+        onAdd: function(map) {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            const button = L.DomUtil.create('a', 'fullscreen-button', container);
+            button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+            </svg>`;
+            button.href = '#';
+            button.title = 'View fullscreen';
+            
+            L.DomEvent.on(button, 'click', L.DomEvent.stop)
+                .on(button, 'click', this._toggleFullscreen, this);
+                
+            return container;
+        },
+        
+        _toggleFullscreen: function() {
+            const mapElement = document.getElementById('map');
+            
+            if (!document.fullscreenElement) {
+                if (mapElement.requestFullscreen) {
+                    mapElement.requestFullscreen();
+                } else if (mapElement.mozRequestFullScreen) {
+                    mapElement.mozRequestFullScreen();
+                } else if (mapElement.webkitRequestFullscreen) {
+                    mapElement.webkitRequestFullscreen();
+                } else if (mapElement.msRequestFullscreen) {
+                    mapElement.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+    });
+
+    L.control.fullscreen = function(options) {
+        return new L.Control.Fullscreen(options);
+    };
+
+    L.control.fullscreen().addTo(map);
 </script>
 
+<!-- Add custom CSS for map controls -->
+<style>
+    .leaflet-control a {
+        width: 36px;
+        height: 36px;
+        line-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4b5563;
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    }
+    .leaflet-control a:hover {
+        background-color: #f3f4f6;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    }
+    .leaflet-control-zoom a {
+        background-color: white !important;
+    }
+    .leaflet-control-zoom a:hover {
+        background-color: #f3f4f6 !important;
+    }
+</style>
 {% endblock %}

@@ -1,67 +1,93 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="min-h-screen bg-gray-100 py-8">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Page Title -->
-        <div class="mb-6 text-center sm:text-left">
-            <h1 class="text-3xl font-bold text-gray-900">Student Management</h1>
-            <p class="mt-1 text-gray-600">Review and manage student applications</p>
+<div class="min-h-screen bg-gray-50 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Title & Subtitle -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-extrabold text-gray-900">Student Applications</h1>
+            <p class="mt-2 text-gray-600">Manage pending student bus applications.</p>
         </div>
 
-        <!-- Success/Error Messages -->
+        <!-- Django Messages -->
         {% if messages %}
-            {% for message in messages %}
-                <div class="mb-4 p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                    <div class="rounded-lg px-4 py-3 text-sm font-medium border
+                        {% if message.tags == 'success' %}
+                            bg-green-100 text-green-800 border-green-300
+                        {% elif message.tags == 'error' %}
+                            bg-red-100 text-red-800 border-red-300
+                        {% elif message.tags == 'warning' %}
+                            bg-yellow-100 text-yellow-800 border-yellow-300
+                        {% else %}
+                            bg-blue-100 text-blue-800 border-blue-300
+                        {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
         <!-- Applications Table -->
-        <div class="bg-white rounded-xl shadow-md">
-            <div class="p-6 border-b border-gray-200 flex justify-between">
-                <h2 class="text-xl font-semibold text-gray-900">Pending Applications</h2>
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800">Pending Applications</h2>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="min-w-full bg-white divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr class="text-left text-gray-600 uppercase text-xs tracking-wider">
-                            <th class="px-6 py-3">Full Name</th>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100 text-xs text-gray-600 uppercase tracking-wider">
+                        <tr>
+                            <th class="px-6 py-3">Name</th>
                             <th class="px-6 py-3">Email</th>
+                            <th class="px-6 py-3">Reg ID</th>
                             <th class="px-6 py-3">Phone</th>
-                            <th class="px-6 py-3">Batch Year</th>
+                            <th class="px-6 py-3">Batch</th>
                             <th class="px-6 py-3">Branch</th>
+                            <th class="px-6 py-3">Semester</th>
                             <th class="px-6 py-3">Bus Route</th>
-                            <th class="px-6 py-3">Actions</th>
+                            <th class="px-6 py-3">Preferred Stop</th>
+                            <th class="px-6 py-3">Applied On</th>
+                            <th class="px-6 py-3 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-gray-200 text-sm">
                         {% for application in applications %}
-                        <tr class="hover:bg-gray-100">
-                            <td class="px-6 py-4 text-gray-900">{{ application.full_name }}</td>
-                            <td class="px-6 py-4 text-gray-600">{{ application.email }}</td>
-                            <td class="px-6 py-4 text-gray-600">{{ application.phone }}</td>
-                            <td class="px-6 py-4 text-gray-600">{{ application.batch_year }}</td>
-                            <td class="px-6 py-4 text-gray-600">{{ application.get_branch_display }}</td>
-                            <td class="px-6 py-4 text-gray-600">
-                                {% if application.bus_route %}
-                                    {{ application.bus_route.number_plate }} - {{ application.bus_route.route }}
-                                {% else %}
-                                    <span class="text-gray-500">Not Assigned</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 text-sm font-medium space-x-4">
-                                <a href="{% url 'approve_student' application.id %}" class="text-green-600 hover:text-green-900">Approve</a>
-                                <a href="{% url 'reject_student' application.id %}" class="text-red-600 hover:text-red-900">Reject</a>
-                            </td>
-                        </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">{{ application.full_name }}</td>
+                                <td class="px-6 py-4 text-gray-700">{{ application.email }}</td>
+                                <td class="px-6 py-4 text-gray-600">{{ application.registered_id }}</td>
+                                <td class="px-6 py-4 text-gray-600">{{ application.phone }}</td>
+                                <td class="px-6 py-4 text-gray-600">{{ application.batch_year }}</td>
+                                <td class="px-6 py-4 text-gray-600">{{ application.get_branch_display }}</td>
+                                <td class="px-6 py-4 text-gray-600">{{ application.semester|default:"—" }}</td>
+                                <td class="px-6 py-4 text-gray-600">
+                                    {% if application.bus_route %}
+                                        {{ application.bus_route.number_plate }} - {{ application.bus_route.route }}
+                                    {% else %}
+                                        <span class="text-gray-400 italic">Not Assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-gray-600">
+                                    {% if application.preferred_stop %}
+                                        {{ application.preferred_stop.name }}
+                                    {% else %}
+                                        <span class="text-gray-400 italic">Not Specified</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-gray-500">{{ application.submitted_at|date:"M d, Y H:i" }}</td>
+                                <td class="px-6 py-4 text-center space-x-3">
+                                    <a href="{% url 'approve_student' application.id %}" class="text-green-600 hover:text-green-800 font-semibold">Approve</a>
+                                    <a href="{% url 'reject_student' application.id %}" class="text-red-600 hover:text-red-800 font-semibold">Reject</a>
+                                </td>
+                            </tr>
                         {% empty %}
-                        <tr>
-                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
-                                No student applications found.
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="11" class="text-center px-6 py-8 text-gray-500 italic">
+                                    No student applications found.
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>

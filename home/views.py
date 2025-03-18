@@ -53,7 +53,8 @@ def admin_login(request):
     return render(request, 'admin_login.html')
 
 def admin_dashboard(request):
-    return render(request, "admin_dashboard.html")
+    messages = list(request.session.pop('messages', []))
+    return render(request, "admin_dashboard.html", {'messages': messages})
 
 def admin_logout(request):
     logout(request)
@@ -613,6 +614,19 @@ def stop_bus_tracking(request):
 def track_bus(request):
     buses = Bus.objects.filter(tracking_enabled=True)
     return render(request, 'track_bus.html', {'buses': buses})
+
+def track_student_bus(request):
+    # Get the student associated with the current user
+    student = Student.objects.get(user=request.user)
+    
+    # Check if student has an assigned bus
+    if student.bus and student.bus.tracking_enabled:
+        buses = [student.bus]  # List containing only the student's bus
+        return render(request, 'track_bus.html', {'buses': buses})
+    else:
+        # If no bus assigned or tracking not enabled
+        messages.info(request, "No trackable bus is currently assigned to your account.")
+        return redirect('student_dashboard')  # Redirect back to dashboard
 
 def payment_transactions(request):
     payments = Payment.objects.select_related('student__user').order_by('-date_paid')
