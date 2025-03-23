@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from math import radians, sin, cos, sqrt, atan2
+from django.utils.timezone import now
 
 # Create your views here.
 
@@ -231,7 +232,7 @@ def driver_logout(request):
     return redirect("driver_login")
 
 @login_required
-def driver_dashboard(request):
+def driver_tracking_page(request):
     try:
         driver = request.user.driver_profile  # Get the driver's profile
         bus = driver.bus  # Get assigned bus (can be None)
@@ -239,7 +240,7 @@ def driver_dashboard(request):
         driver = None
         bus = None
 
-    return render(request, "driver_dashboard.html", {
+    return render(request, "driver_bus_control.html", {
         'driver': driver,
         'bus': bus,
     })
@@ -309,7 +310,7 @@ def student_application(request):
         "branch_choices": branch_choices,
     })
 
-def student_management(request):
+def student_register(request):
     applications = StudentApplication.objects.all()
 
     return render(request, "student_management.html", {
@@ -631,3 +632,104 @@ def track_student_bus(request):
 def payment_transactions(request):
     payments = Payment.objects.select_related('student__user').order_by('-date_paid')
     return render(request, 'payment_transactions.html', {'payments': payments})
+
+@login_required
+def student_management(request):
+    # Group students by branch
+    branches = dict(Student.BRANCH_CHOICES)
+    grouped_students = {}
+
+    for code, name in branches.items():
+        students = Student.objects.filter(branch=code).select_related('user', 'bus', 'bus_stop')
+        grouped_students[name] = students
+
+    buses = Bus.objects.all()
+    bus_stops = BusStop.objects.all()
+
+    return render(request, 'student_list_by_branch.html', {
+        'grouped_students': grouped_students,
+        'buses': buses,
+        'bus_stops': bus_stops,
+    })
+
+def update_student(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    student.admission_number = request.POST.get('admission_number', '')
+    student.semester = request.POST.get('semester', student.semester)
+    bus_id = request.POST.get('bus_id')
+    stop_id = request.POST.get('bus_stop_id')
+
+    student.bus = Bus.objects.get(id=bus_id) if bus_id else None
+    student.bus_stop = BusStop.objects.get(id=stop_id) if stop_id else None
+    student.save()
+    return redirect('student_management')
+@login_required
+def driver_dashboard(request):
+    try:
+        driver = request.user.driver_profile
+        bus = driver.bus  # This can be None if not assigned
+    except Driver.DoesNotExist:
+        # Redirect to login or show an error
+        return redirect('driver_login')
+
+    return render(request, 'driver_dashboard.html', {
+        'driver': driver,
+        'bus': bus
+    })
+
+@login_required
+def scan_student_qr(request):
+    return render(request, "scan_student_qr.html")
+
+@csrf_exempt
+@login_required
+@csrf_exempt
+def validate_admission_number(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        admission_number = data.get("admission_number", "").strip()
+
+        try:
+            student = Student.objects.select_related('user').get(admission_number=admission_number)
+            has_paid = Payment.objects.filter(student=student, semester=student.semester).exists()
+
+            return JsonResponse({
+                "valid": True,
+                "name": student.user.get_full_name(),
+                "admission_number": student.admission_number,
+                "has_paid": has_paid
+            })
+        except Student.DoesNotExist:
+            return JsonResponse({ "valid": False })
+
+    return JsonResponse({ "error": "Invalid request" }, status=400)
+@csrf_exempt
+def mark_attendance(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        admission_number = data.get('admission_number')
+        route = data.get('route')
+        date_str = data.get('date')
+
+        try:
+            student = Student.objects.get(admission_number=admission_number)
+
+            # Check payment
+            if not student.payments.filter(semester=student.semester).exists():
+                return JsonResponse({'success': False, 'error': 'Student has not paid for current semester.'})
+
+            # Parse date
+            date = timezone.datetime.strptime(date_str, "%Y-%m-%d").date()
+
+            # Mark attendance (unique by date + route)
+            attendance, created = Attendance.objects.get_or_create(
+                student=student,
+                date=date,
+                route=route
+            )
+            return JsonResponse({'success': True, 'student': student.user.get_full_name(), 'created': created})
+
+        except Student.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Student not found'}, status=404)
+
+    return JsonResponse({'error': 'Invalid method'}, status=405)

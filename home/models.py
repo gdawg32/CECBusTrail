@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.utils import timezone
 # Bus Model
 class BusStop(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -40,6 +40,7 @@ class Student(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
     registered_id = models.CharField(max_length=255, unique=True)
+    admission_number = models.CharField(max_length=50, unique=True, blank=True, null=True)
     batch_year = models.CharField(max_length=9)  # Example: '2022-26'
     branch = models.CharField(max_length=5, choices=BRANCH_CHOICES)
     bus = models.ForeignKey(Bus, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
@@ -112,3 +113,20 @@ class StudentApplication(models.Model):
 
     def __str__(self):
         return f"{self.full_name} ({self.batch_year} - {self.get_branch_display()})"
+
+class Attendance(models.Model):
+    ROUTE_CHOICES = [
+        ('to', 'To College'),
+        ('from', 'From College'),
+    ]
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendances')
+    date = models.DateField(default=timezone.now)
+    time = models.TimeField(auto_now_add=True)
+    route = models.CharField(max_length=10, choices=ROUTE_CHOICES)
+
+    class Meta:
+        unique_together = ('student', 'date', 'route')  # prevent duplicates
+
+    def __str__(self):
+        return f"{self.student.user.get_full_name()} - {self.route} on {self.date}"
