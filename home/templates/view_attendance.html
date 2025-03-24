@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden">
+        <div class="bg-blue-600 text-white p-6">
+            <h1 class="text-3xl font-bold tracking-tight">Attendance Records</h1>
+        </div>
+
+        <div class="p-8 space-y-8">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Select Bus</label>
+                    <select name="bus" class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+                        <option value="">All Buses</option>
+                        {% for bus in buses %}
+                            <option value="{{ bus.id }}" {% if selected_bus_id == bus.id|stringformat:'s' %}selected{% endif %}>
+                                {{ bus.number_plate }} - {{ bus.route }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Select Date</label>
+                    <input type="date" name="date" value="{{ selected_date }}" 
+                        class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Route</label>
+                    <select name="route" 
+                        class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+                        <option value="">All Routes</option>
+                        <option value="to" {% if selected_route == 'to' %}selected{% endif %}>To College</option>
+                        <option value="from" {% if selected_route == 'from' %}selected{% endif %}>From College</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-3 flex justify-end space-x-4">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 
+                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
+                        transition duration-300 ease-in-out transform hover:-translate-y-0.5 shadow-lg">
+                        View Records
+                    </button>
+                </div>
+            </form>
+
+            {% if attendances %}
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 bg-gray-50 flex justify-between items-center">
+                        <div class="flex items-center space-x-4">
+                            <input type="text" id="searchInput" placeholder="Search records..." 
+                                class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            
+                            <select id="branchFilter" class="px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="">All Branches</option>
+                                {% for branch_value, branch_name in branch_choices %}
+                                    <option value="{{ branch_name }}">{{ branch_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <button id="exportPdfBtn" class="text-sm text-blue-600 hover:text-blue-800 mr-4">
+                                Export PDF
+                            </button>
+                            <button id="printBtn" class="text-sm text-blue-600 hover:text-blue-800">
+                                Print
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="attendanceTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr class="text-gray-500 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-left font-medium">Student Name</th>
+                                    <th class="px-6 py-3 text-left font-medium">Admission No.</th>
+                                    <th class="px-6 py-3 text-left font-medium">Batch</th>
+                                    <th class="px-6 py-3 text-left font-medium">Branch</th>
+                                    <th class="px-6 py-3 text-left font-medium">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for att in attendances %}
+                                    <tr class="hover:bg-gray-50 transition duration-150">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{ att.student.user.get_full_name }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ att.student.admission_number }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ att.student.batch_year }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ att.student.get_branch_display }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ att.time|time:"h:i A" }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% elif selected_bus_id %}
+                <div class="text-center bg-gray-100 border border-gray-200 rounded-lg p-8">
+                    <p class="text-gray-600 text-lg">No attendance records found for the selected criteria.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.15/jspdf.plugin.autotable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const { jsPDF } = window.jspdf;
+
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const branchFilter = document.getElementById('branchFilter');
+    const table = document.getElementById('attendanceTable');
+    const rows = table.querySelectorAll('tbody tr');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedBranch = branchFilter.value;
+
+        rows.forEach(row => {
+            const studentName = row.cells[0].textContent.toLowerCase();
+            const admissionNo = row.cells[1].textContent;
+            const branch = row.cells[3].textContent;
+
+            const nameMatch = studentName.includes(searchTerm) || admissionNo.includes(searchTerm);
+            const branchMatch = selectedBranch === '' || branch === selectedBranch;
+
+            row.style.display = nameMatch && branchMatch ? '' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    branchFilter.addEventListener('change', filterTable);
+
+    // PDF Export functionality
+    document.getElementById('exportPdfBtn').addEventListener('click', function() {
+        const doc = new jsPDF();
+        
+        // Add title
+        doc.setFontSize(18);
+        doc.text('Attendance Records', 14, 22);
+
+        // Filter description
+        const busSelect = document.querySelector('select[name="bus"]');
+        const dateInput = document.querySelector('input[name="date"]');
+        const routeSelect = document.querySelector('select[name="route"]');
+
+        doc.setFontSize(10);
+        doc.text(`Bus: ${busSelect.options[busSelect.selectedIndex].text}`, 14, 30);
+        doc.text(`Date: ${dateInput.value || 'All Dates'}`, 14, 36);
+        doc.text(`Route: ${routeSelect.options[routeSelect.selectedIndex].text}`, 14, 42);
+
+        // Table columns
+        const columns = ['Student Name', 'Admission No.', 'Batch', 'Branch', 'Time'];
+        
+        // Visible table rows
+        const visibleRows = Array.from(rows)
+            .filter(row => row.style.display !== 'none')
+            .map(row => 
+                Array.from(row.cells).map(cell => cell.textContent.trim())
+            );
+
+        // Generate PDF table
+        doc.autoTable({
+            startY: 50,
+            head: [columns],
+            body: visibleRows,
+            theme: 'striped'
+        });
+
+        // Save PDF
+        doc.save('attendance_records.pdf');
+    });
+
+    // Print functionality
+    document.getElementById('printBtn').addEventListener('click', function() {
+        window.print();
+    });
+});
+</script>
+{% endblock %}

@@ -10,6 +10,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from math import radians, sin, cos, sqrt, atan2
 from django.utils.timezone import now
+import datetime
+from django.utils.dateparse import parse_date
 
 # Create your views here.
 
@@ -733,3 +735,36 @@ def mark_attendance(request):
             return JsonResponse({'success': False, 'error': 'Student not found'}, status=404)
 
     return JsonResponse({'error': 'Invalid method'}, status=405)
+
+def view_attendance(request):
+    buses = Bus.objects.all()
+    attendances = []
+
+    selected_bus_id = request.GET.get('bus')
+    selected_date = request.GET.get('date')
+    selected_route = request.GET.get('route') 
+
+    print(selected_bus_id, selected_date, selected_route)
+
+    if selected_bus_id and selected_date and selected_route:
+        try:
+            parsed_date = parse_date(selected_date)
+            if parsed_date:
+                attendances = Attendance.objects.select_related('student__user') \
+                    .filter(
+                        student__bus_id=selected_bus_id,
+                        date=parsed_date,
+                        route=selected_route
+                    ).order_by('time')
+        except Exception as e:
+            print("Error:", e)
+
+    context = {
+        'buses': buses,
+        'attendances': attendances,
+        'selected_bus_id': selected_bus_id,
+        'selected_date': selected_date,
+        'selected_route': selected_route,
+        'branch_choices': Student.BRANCH_CHOICES,
+    }
+    return render(request, 'view_attendance.html', context)

@@ -31,6 +31,8 @@ urlpatterns = [
     path("admin_dashboard/reject-student/<int:application_id>/", views.reject_student, name="reject_student"),
     path('admin_dashboard/payment-transactions/', views.payment_transactions, name='payment_transactions'),
     path('admin_dashboard/student-management/', views.student_management, name='student_management'),
+    path('admin_dashboard/view-attendance/', views.view_attendance, name='view_attendance'),
+
     path("student/login/", views.student_login, name="student_login"),
     path("student/dashboard/", views.student_dashboard, name="student_dashboard"),
     path("student/logout/", views.student_logout, name="student_logout"),
